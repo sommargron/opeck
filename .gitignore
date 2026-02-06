@@ -1,0 +1,7 @@
+*.csv
+*.tsv
+*.xlsx
+*.parquet
+*.rds
+*.feather
+data/
