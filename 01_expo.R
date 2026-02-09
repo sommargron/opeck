@@ -1,3 +1,5 @@
+install.packages('tidyverse')
+install.packages('readxl')
 library('tidyverse')
 
 opeck_e1 <- read_csv('data.csv', 
@@ -39,8 +41,8 @@ opeck_e2 <- opeck_e1 %>%
          duration = y_end - y_start)
 
 ace_jem_b <- bind_cols(
-  readxl::read_xlsx('ace-jem.xlsx', range = 'A2:A355'),
-  readxl::read_xlsx('ace-jem.xlsx', range = 'D2:Q355')) %>% 
+  readxl::read_xlsx('ACE-JEM.xlsx', range = 'A2:A355'),
+  readxl::read_xlsx('ACE-JEM.xlsx', range = 'D2:Q355')) %>% 
   rename('job_gr' = 'Unit   Group',
          'vapo' = 'Vapour',
          'gas' = 'Gas',
@@ -58,8 +60,8 @@ ace_jem_b <- bind_cols(
          'vgdffm' = 'VGDFFM')
 
 ace_jem_p <- bind_cols(
-  readxl::read_xlsx('ace-jem.xlsx', range = 'A2:A355'),
-  readxl::read_xlsx('ace-jem.xlsx', range = 'R2:AE355')) %>% 
+  readxl::read_xlsx('ACE-JEM.xlsx', range = 'A2:A355'),
+  readxl::read_xlsx('ACE-JEM.xlsx', range = 'R2:AE355')) %>% 
   rename('job_gr' = 'Unit   Group',
          'vapo' = 'Vapour',
          'gas' = 'Gas',
@@ -77,8 +79,8 @@ ace_jem_p <- bind_cols(
          'vgdffm' = 'VGDFFM')
 
 ace_jem_l <- bind_cols(
-  readxl::read_xlsx('ace-jem.xlsx', range = 'A2:A355'),
-  readxl::read_xlsx('ace-jem.xlsx', range = 'AF2:AS355')) %>% 
+  readxl::read_xlsx('ACE-JEM.xlsx', range = 'A2:A355'),
+  readxl::read_xlsx('ACE-JEM.xlsx', range = 'AF2:AS355')) %>% 
   rename('job_gr' = 'Unit   Group',
          'vapo' = 'Vapour',
          'gas' = 'Gas',
@@ -101,20 +103,32 @@ ace_jem <- ace_jem_b %>%
             by = 'job_gr') %>% 
   left_join(ace_jem_l %>% rename_with(~str_c(.x, '_l'), -job_gr), 
             by = 'job_gr') %>% 
+  pivot_longer(-job_gr, 
+               names_to = c('expo', 'metric'),
+               names_pattern = '(.*)_(.*)') %>% 
+  pivot_wider(id_cols = c('job_gr', 'expo'),
+              names_from = 'metric') %>%
   mutate(
-    vapo = vapo_l * vapo_p,
-    gas = gas_l * gas_p,
-    dust = dust_l * dust_p,
-    dust_bio = dust_bio_l * dust_bio_p,
-    dust_min = dust_min_l * dust_min_p,
-    fume = fume_l * fume_p,
-    dies = dies_l * dies_p,
-    fibr = fibr_l * fibr_p,
-    mist = mist_l * mist_p,
-    asth = asth_l * asth_p,
-    meta = meta_l * meta_p,
-    gasf = gasf_l * gasf_p,
-    vgdf = vgdf_l * vgdf_p,
-    vgdffm = vgdffm_l * vgdffm_p
-  )
+    combined = case_when(
+      p == 0 ~ 0,
+      l == 0 ~ 0,
+      p == 1 ~ 1,
+      p == 2 ~ 1,
+      p == 3 & l == 1 ~ 1,
+      p == 3 & l >= 2 ~ 2) %>% 
+      factor(levels = c(0,1,2),
+             labels = c('none', 'low', 'high')))
 
+p01_00 <- ace_jem %>% 
+  group_by(expo) %>% 
+  count(combined) %>% 
+  ggplot(aes(x = combined, y = n, fill = combined)) + 
+  geom_col() + 
+  geom_label(aes(label = n)) +
+  labs(x = 'Exposure group', fill = '', y = 'SOC codes (count)') +
+  scale_y_continuous(expand = c(0,0), limits = c(0,400)) +
+  ggtitle('ACE-JEM exposure overview') +
+  facet_wrap(vars(expo)) +
+  theme_bw()
+ggsave(p01_00, filename = 'opeck/outputs/plots/p01_00.svg', width = 10, height = 6)
+  
