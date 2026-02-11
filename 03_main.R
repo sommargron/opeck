@@ -128,8 +128,9 @@ opeck_res_a1 <-
                              'vgdf' ~ 'VGDF',
                              'vgdffm' ~ 'VGDFFM'))
 
-opeck_res_a1 %>%  
-  filter(!term %in% c('asth', 'gasf')) %>% 
+p03_00 <- opeck_res_a1 %>%  
+  filter(!term %in% c('asth', 'gasf'),
+         model != 0) %>% 
   mutate(
     model = factor(model) %>% fct_rev(),
     term  = factor(term) %>% fct_rev(),
@@ -156,14 +157,17 @@ opeck_res_a1 %>%
   geom_vline(aes(xintercept = 1), colour = 'white', size = 2) +
   geom_point(aes(shape = model), position = position_dodge(.8)) +
   geom_errorbar(orientation = 'y', position = position_dodge(.8), width = .5) +
-  scale_x_continuous(trans = 'log', breaks = c(.95, 1, 1.05, 1.1, 1.15, 1.2)) +
+  scale_x_continuous(trans = 'log', 
+                     breaks = c(.95, 1, 1.05, 1.1, 1.15, 1.2),
+                     expand = c(0,0)) +
   scale_colour_grey(start = .1, end = .7, breaks = 0:4) + 
   scale_shape_manual(values = 15:19, breaks = 0:4) +
-  coord_cartesian(xlim = c(.9, 1.21)) +
-  labs(shape = 'Model', colour = 'Model') +
+  coord_cartesian(xlim = c(.91, 1.21)) +
+  labs(shape = 'Model', colour = 'Model', x = 'Adjusted HR (95% CI) for incident CKD per 10 EU-year') +
   theme_void() +
   theme(
-    axis.text.x = element_text(),
+    axis.text.x = element_text(size = 10, vjust = 1),
+    axis.title.x = element_text(size = 12, hjust = 1, vjust = 0),
     legend.position = 'bottom'
   )
 ggsave(filename = 'opeck/outputs/plots/p03_00.svg', p03_00, width = 10, height = 6)
