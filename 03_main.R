@@ -20,9 +20,10 @@ opeck_a1 <- left_join(
   opeck_o2,
   opeck_e3,
   by = 'opeck_id'
-) %>% 
+) %>%  
   filter(is.na(n18) | n18 > date_enrol,
-         is.na(n07)) %>% 
+         is.na(n07)
+) %>% 
   mutate(
     time = pmin(
       date_death,

@@ -45,7 +45,7 @@ opeck_o1 <- read_csv('data.csv',
     across(
       c(eth, inc, qua),
       \(x) na_if(x, '-1')),
-    eth = str_sub(eth, -1, -1), 
+    eth = str_sub(eth, 1, 1), 
     ) %>% 
   mutate(across(c(sex, age, yob, qua), as.integer),
          across(c(date_enrol, date_death, date_lofup, eskd, n03, n07, n18, e10, e11, e12, e13, e14, i10), 
