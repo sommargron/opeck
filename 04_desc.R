@@ -157,8 +157,27 @@ left_join(
 ) %>% 
   filter(is.na(n07)) %>%
   select(names(opeck_e3)) %>% 
-  summarise(across(-opeck_id, \(x) sum(x == 0, na.rm = T), .names = '{.col}_0'),
-            across(-opeck_id, \(x) sum(x > 0 & x <= 1, na.rm = T), .names = '{.col}_1'),
-            across(-opeck_id, \(x) sum(x > 1, na.rm = T), .names = '{.col}_2')) %>% 
+  summarise(across(c('dies','dust','dust_bio','dust_min','fibr','fume','gas','gasf','meta','mist','vapo','vgdf','vgdffm'),
+                   \(x) sum(x == 0, na.rm = T), .names = '{.col}_0'),
+            across(c('dies','dust','dust_bio','dust_min','fibr','fume','gas','gasf','meta','mist','vapo','vgdf','vgdffm'),
+                   \(x) sum(x > 0 & x <= 1, na.rm = T), .names = '{.col}_1'),
+            across(c('dies','dust','dust_bio','dust_min','fibr','fume','gas','gasf','meta','mist','vapo','vgdf','vgdffm'),
+                   \(x) sum(x > 1, na.rm = T), .names = '{.col}_2')) %>% 
   pivot_longer(everything(), names_to = c('expo', 'level'), names_pattern = '(.*)_(.*)') %>% 
-  pivot_wider(id_cols = 'expo', names_from = 'level')
+  pivot_wider(id_cols = 'expo', names_from = 'level') %>% 
+  mutate(expo_f = case_match(expo,
+                             'dies' ~ 'Diesel exhaust',
+                             'dust' ~ 'Dusts',
+                             'dust_bio' ~ 'Biological dusts',
+                             'dust_min' ~ 'Mineral dusts',
+                             'fibr' ~ 'Fibres',
+                             'fume' ~ 'Fumes',
+                             'gas' ~ 'Gasses',
+                             'gasf' ~ 'Gasses and fumes',
+                             'meta' ~ 'Metals',
+                             'mist' ~ 'Mists',
+                             'vapo' ~ 'Vapours',
+                             'vgdf' ~ 'VGDF',
+                             'vgdffm' ~ 'VGDFFM')) %>%
+  arrange(expo_f) %>% 
+  writexl::write_xlsx(path = 'opeck/outputs/table2.xlsx')
