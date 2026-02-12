@@ -118,21 +118,6 @@ ace_jem <- ace_jem_b %>%
       p == 3 & l == 1 ~ 1,
       p == 3 & l >= 2 ~ 2))
 
-p01_00 <- ace_jem %>% 
-  mutate(combined = combined %>% 
-           factor(levels = c(0,1,2),
-                  labels = c('none', 'low', 'high'))) %>% 
-  group_by(expo) %>% 
-  count(combined) %>% 
-  ggplot(aes(x = combined, y = n, fill = combined)) + 
-  geom_col() + 
-  geom_text(aes(label = n), vjust = 0) +
-  labs(x = 'Exposure group', fill = '', y = 'SOC codes (count)') +
-  scale_y_continuous(expand = c(0,0), limits = c(0,400)) +
-  ggtitle('ACE-JEM exposure overview') +
-  facet_wrap(vars(expo)) +
-  theme_bw()
-ggsave(p01_00, filename = 'opeck/outputs/plots/p01_00.svg', width = 10, height = 6)
 
 opeck_e3 <- opeck_e2 %>% 
   left_join(ace_jem %>% 
@@ -140,7 +125,7 @@ opeck_e3 <- opeck_e2 %>%
               pivot_wider(id_cols = 'job_gr', 
                           names_from = 'expo', 
                           values_from = 'combined')) %>% 
-  filter(class == 'j') %>% 
+  filter(class == 'j', duration > 0) %>% 
   group_by(opeck_id) %>% 
   summarise(across(c(vapo, gas, dust, dust_bio, dust_min, fume, dies, fibr, mist, 
                      asth, meta, gasf, vgdf, vgdffm),
@@ -148,22 +133,3 @@ opeck_e3 <- opeck_e2 %>%
 
 rm(opeck_e1, opeck_e2)
 rm(ace_jem_b, ace_jem_l, ace_jem_p)
-
-options(scipen = 999)
-
-p01_01 <- opeck_e3 %>% 
-  pivot_longer(cols = -opeck_id, names_to = 'expo', values_to = 'eu_years') %>% 
-  ggplot(aes(x = eu_years+1, fill = expo)) +
-  geom_histogram(binwidth = 1) +
-  scale_y_continuous(expand = c(0,0), 
-                     trans = 'log', 
-                     breaks = 10^(0:5), 
-                     limits = c(1, 500000)) +
-  scale_x_continuous(trans = 'log',
-                     breaks = 10^(0:2)) +
-  facet_wrap(vars(expo)) +
-  labs(x = 'EU-years', y = 'Count (participants)') +
-  theme_bw() +
-  theme(legend.position = 'none') +
-  ggtitle('Distribution of exposure unit-years (EU-years) in UK Biobank')
-ggsave('opeck/outputs/plots/p01_01.svg', width = 10, height = 6)

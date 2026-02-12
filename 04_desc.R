@@ -1,3 +1,5 @@
+# Table 1 ----------------------------------------------------------------------
+# Helper functions
 fmt_mean_sd <- function(x) {
   x <- x[is.finite(x)]
   if (length(x) == 0) return(NA_character_)
@@ -17,6 +19,7 @@ fmt_n_pct <- function(x) {
   sprintf("%d (%.1f%%)", n, 100 * n / d)
 }
 
+# Actual table
 table1 <- full_join(
   left_join(
     opeck_o2,
@@ -144,5 +147,18 @@ table1 <- full_join(
       pivot_wider(names_from = rowname), 
     by = 'name', 
     suffix = c('ckd_free', 'ckd_prev'))
-
 writexl::write_xlsx(table1, path = 'opeck/outputs/table1.xlsx')
+
+# Table 2 ----------------------------------------------------------------------
+left_join(
+  opeck_o2,
+  opeck_e3,
+  by = 'opeck_id'
+) %>% 
+  filter(is.na(n07)) %>%
+  select(names(opeck_e3)) %>% 
+  summarise(across(-opeck_id, \(x) sum(x == 0, na.rm = T), .names = '{.col}_0'),
+            across(-opeck_id, \(x) sum(x > 0 & x <= 1, na.rm = T), .names = '{.col}_1'),
+            across(-opeck_id, \(x) sum(x > 1, na.rm = T), .names = '{.col}_2')) %>% 
+  pivot_longer(everything(), names_to = c('expo', 'level'), names_pattern = '(.*)_(.*)') %>% 
+  pivot_wider(id_cols = 'expo', names_from = 'level')

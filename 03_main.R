@@ -1,5 +1,6 @@
-source(here::here('opeck','01_expo.R'))
-source(here::here('opeck','02_outc.R'))
+source('opeck/00_setup.R')
+source('opeck/01_expo.R')
+source('opeck/02_outc.R')
 
 expo <- c("vapo",
           "gas",
@@ -127,50 +128,6 @@ opeck_res_a1 <-
                              'vapo' ~ 'Vapours',
                              'vgdf' ~ 'VGDF',
                              'vgdffm' ~ 'VGDFFM'))
-
-p03_00 <- opeck_res_a1 %>%  
-  filter(!term %in% c('asth', 'gasf'),
-         model != 0) %>% 
-  mutate(
-    model = factor(model) %>% fct_rev(),
-    term  = factor(term) %>% fct_rev(),
-    term_id = as.numeric(term)
-  ) %>% 
-  ggplot(aes(y = term,
-             group = model,
-             x = exp(estimate), 
-             xmin = exp(estimate - 1.96*std.error), 
-             xmax = exp(estimate + 1.96*std.error),
-             colour = model)) +
-  geom_rect(
-    aes(
-      ymin = term_id - 0.44,
-      ymax = term_id + 0.44,
-      xmin = 0.95,
-      xmax = 1.22
-    ),
-    fill = 'lightgrey',
-    inherit.aes = FALSE,
-    alpha = 0.05
-  ) +
-  geom_text(aes(y = term, x = 0.9475, label = term_f), hjust = 1, colour = 'black') +
-  geom_vline(aes(xintercept = 1), colour = 'white', size = 2) +
-  geom_point(aes(shape = model), position = position_dodge(.8)) +
-  geom_errorbar(orientation = 'y', position = position_dodge(.8), width = .5) +
-  scale_x_continuous(trans = 'log', 
-                     breaks = c(.95, 1, 1.05, 1.1, 1.15, 1.2),
-                     expand = c(0,0)) +
-  scale_colour_grey(start = .1, end = .7, breaks = 0:4) + 
-  scale_shape_manual(values = 15:19, breaks = 0:4) +
-  coord_cartesian(xlim = c(.91, 1.21)) +
-  labs(shape = 'Model', colour = 'Model', x = 'Adjusted HR (95% CI) for incident CKD per 10 EU-year') +
-  theme_void() +
-  theme(
-    axis.text.x = element_text(size = 10, vjust = 1),
-    axis.title.x = element_text(size = 12, hjust = 1, vjust = 0),
-    legend.position = 'bottom'
-  )
-ggsave(filename = 'opeck/outputs/plots/p03_00.svg', p03_00, width = 10, height = 6)
 
 # 03_00 LONGITUDINAL ANALYSES OF INCIDENT --------------------------------------
 opeck_a2 <- left_join(
