@@ -472,3 +472,98 @@ opeck_res_a4 <-
                              'vapo' ~ 'Vapours',
                              'vgdf' ~ 'VGDF',
                              'vgdffm' ~ 'VGDFFM'))
+
+# 03_04 CROSS-SECTIONAL ANALYSES OF uACR-cat -----------------------------------
+opeck_a5 <- left_join(
+  opeck_o2,
+  opeck_e3,
+  by = 'opeck_id'
+) %>%  
+  filter(is.na(n07))
+
+fit_a5_m0 <- map(
+  expo,
+  \(x) glm(family = 'poisson',
+           as.formula(paste0('uacr > 3 ~ ', 
+                             x)),
+           data = opeck_a5
+  )
+)
+
+fit_a5_m1 <- map(
+  expo,
+  \(x) glm(family = 'poisson',
+           as.formula(paste0('uacr > 3 ~ ', 
+                             x, 
+                             ' + rcs(age, 3) + sex')),
+           data = opeck_a5
+  )
+)
+
+fit_a5_m2 <- map(
+  expo,
+  \(x) glm(family = 'poisson',
+           as.formula(paste0('uacr > 3 ~ ', 
+                             x, 
+                             ' + rcs(age, 3) + sex',
+                             ' + smo + rcs(bmi,3) + alc')),
+           data = opeck_a5
+  )
+)
+
+fit_a5_m3 <- map(
+  expo,
+  \(x) glm(family = 'poisson',
+           as.formula(paste0('uacr > 3 ~ ', 
+                             x, 
+                             ' + rcs(age, 3) + sex',
+                             ' + smo + rcs(bmi,3) + alc',
+                             ' + rcs(dep,3) + eth + rcs(qua,3) + inc')),
+           data = opeck_a5
+  )
+)
+
+fit_a5_m4 <- map(
+  expo,
+  \(x) glm(family = 'poisson',
+           as.formula(paste0('uacr > 3 ~ ', 
+                             x, 
+                             ' + rcs(age, 3) + sex',
+                             ' + smo + rcs(bmi,3) + alc',
+                             ' + rcs(dep,3) + eth + rcs(qua,3) + inc',
+                             ' + rcs(ldl,3) + rcs(gly,3) + dia + hpt')),
+           data = opeck_a5
+  )
+)
+
+opeck_res_a5 <- 
+  map2(
+    list(
+      map(fit_a5_m0, broom::tidy) %>% bind_rows,
+      map(fit_a5_m1, broom::tidy) %>% bind_rows,
+      map(fit_a5_m2, broom::tidy) %>% bind_rows,
+      map(fit_a5_m3, broom::tidy) %>% bind_rows,
+      map(fit_a5_m4, broom::tidy) %>% bind_rows
+    ),
+    0:4,
+    \(x, y) bind_rows(x) %>% 
+      mutate(model = y) %>% 
+      filter(term %in% expo)
+  ) %>% 
+  bind_rows() %>% 
+  mutate(term_f = case_match(term,
+                             'asth' ~ 'Asthmagens',
+                             'dies' ~ 'Diesel exhaust',
+                             'dust' ~ 'Dusts',
+                             'dust_bio' ~ 'Biological dusts',
+                             'dust_min' ~ 'Mineral dusts',
+                             'fibr' ~ 'Fibres',
+                             'fume' ~ 'Fumes',
+                             'gas' ~ 'Gasses',
+                             'gasf' ~ 'Gasses and fumes',
+                             'meta' ~ 'Metals',
+                             'mist' ~ 'Mists',
+                             'vapo' ~ 'Vapours',
+                             'vgdf' ~ 'VGDF',
+                             'vgdffm' ~ 'VGDFFM'))
+
