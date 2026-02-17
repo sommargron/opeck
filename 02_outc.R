@@ -34,10 +34,15 @@ opeck_o1 <- read_csv('data.csv',
          dep = p22189,
          eth = p21000_i0,
          qua = p845_i0,
-         inc = p738_i0) %>% 
+         inc = p738_i0,
+         emp = p6142_i0,
+         emp_corr = p20119_i0) %>% 
   mutate(
     across(
-      c(smo, alc, eth, inc, qua),
+      c(emp, emp_corr),
+      \(x) na_if(x, '-7')),
+    across(
+      c(smo, alc, eth, inc, qua, emp, emp_corr),
       \(x) na_if(x, '-3')),
     across(
       c(qua),
@@ -45,8 +50,13 @@ opeck_o1 <- read_csv('data.csv',
     across(
       c(eth, inc, qua),
       \(x) na_if(x, '-1')),
-    eth = str_sub(eth, 1, 1), 
+    eth = str_sub(eth, 1, 1) == '1', 
     ) %>% 
+  mutate(emp_curr = case_when(!is.na(emp_corr) & emp_corr == '1' ~ 1,
+                              emp == '1' ~ 1,
+                              !is.na(emp_corr) & emp_corr != '1' ~ 0,
+                              TRUE ~ 0),
+         emp_sick = str_detect(emp, '4') | (!is.na(emp_corr) & emp_corr == '4')) %>% 
   mutate(across(c(sex, age, yob, qua), as.integer),
          across(c(date_enrol, date_death, date_lofup, eskd, n03, n07, n18, e10, e11, e12, e13, e14, i10), 
                 \(x) as.Date.character(x, format =  '%Y-%m-%d')),
@@ -87,5 +97,8 @@ opeck_o2 <- opeck_o1 %>%
          dia = if_any(c(e10, e11, e12, e13, e14), 
                       \(x) !is.na(x) & x <= date_enrol),
          hpt = !is.na(i10) & i10 < date_enrol)
+
+saveRDS(opeck_o2, file = 'opeck_o2.rds')
+system("dx upload opeck_o2.rds --destination 'Datasets/Working data/opeck_o2.rds'")
 
 rm(opeck_o1)

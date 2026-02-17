@@ -17,7 +17,11 @@ expo <- c("vapo",
           "vgdf", 
           "vgdffm")
 
-# 03_00 LONGITUDINAL ANALYSES OF INCIDENT --------------------------------------
+dd <- datadist(opeck_a1 %>% 
+                 select(expo, age, sex, year_enrol, smo, bmi, alc, dep, eth, qua, inc))
+options(datadist = "dd")
+
+# 03_00 LONGITUDINAL ANALYSES OF INCIDENT CKD ----------------------------------
 opeck_a1 <- left_join(
   opeck_o2,
   opeck_e3,
@@ -45,7 +49,7 @@ surv_a1 <- Surv(
 
 fit_a1_m0 <- map(
   expo,
-  \(x) coxph(
+  \(x) rms::cph(
     as.formula(paste0('surv_a1 ~ ', 
                       x)),
     data = opeck_a1
@@ -54,7 +58,7 @@ fit_a1_m0 <- map(
 
 fit_a1_m1 <- map(
   expo,
-  \(x) coxph(
+  \(x) rms::cph(
     as.formula(paste0('surv_a1 ~ ', 
                       x, 
                       ' + rcs(age, 3) + sex + year_enrol')),
@@ -64,7 +68,7 @@ fit_a1_m1 <- map(
 
 fit_a1_m2 <- map(
   expo,
-  \(x) coxph(
+  \(x) rms::cph(
     as.formula(paste0('surv_a1 ~ ', 
                       x, 
                       ' + rcs(age, 3) + sex + year_enrol',
@@ -75,7 +79,7 @@ fit_a1_m2 <- map(
 
 fit_a1_m3 <- map(
   expo,
-  \(x) coxph(
+  \(x) rms::cph(
     as.formula(paste0('surv_a1 ~ ', 
                       x, 
                       ' + rcs(age, 3) + sex + year_enrol',
@@ -87,7 +91,7 @@ fit_a1_m3 <- map(
 
 fit_a1_m4 <- map(
   expo,
-  \(x) coxph(
+  \(x) rms::cph(
     as.formula(paste0('surv_a1 ~ ', 
                       x, 
                       ' + rcs(age, 3) + sex + year_enrol',
@@ -98,14 +102,14 @@ fit_a1_m4 <- map(
   )
 )
 
-opeck_res_a1 <- 
+opeck_res_a1x <- 
   map2(
     list(
       map(fit_a1_m0, broom::tidy) %>% bind_rows,
       map(fit_a1_m1, broom::tidy) %>% bind_rows,
       map(fit_a1_m2, broom::tidy) %>% bind_rows,
       map(fit_a1_m3, broom::tidy) %>% bind_rows,
-      map(fit_a1_m4, broom::tidy) %>% bind_rows
+      map(fit_a1_m4, broom::tidy) %>% bind_rows,
     ),
     0:4,
     \(x, y) bind_rows(x) %>% 
@@ -157,7 +161,7 @@ surv_a2 <- Surv(
 
 fit_a2_m0 <- map(
   expo,
-  \(x) coxph(
+  \(x) rms::cph(
     as.formula(paste0('surv_a2 ~ ', 
                       x)),
     data = opeck_a2
@@ -166,7 +170,7 @@ fit_a2_m0 <- map(
 
 fit_a2_m1 <- map(
   expo,
-  \(x) coxph(
+  \(x) rms::cph(
     as.formula(paste0('surv_a2 ~ ', 
                       x, 
                       ' + rcs(age, 3) + sex + year_enrol')),
@@ -176,7 +180,7 @@ fit_a2_m1 <- map(
 
 fit_a2_m2 <- map(
   expo,
-  \(x) coxph(
+  \(x) rms::cph(
     as.formula(paste0('surv_a2 ~ ', 
                       x, 
                       ' + rcs(age, 3) + sex + year_enrol',
@@ -187,7 +191,7 @@ fit_a2_m2 <- map(
 
 fit_a2_m3 <- map(
   expo,
-  \(x) coxph(
+  \(x) rms::cph(
     as.formula(paste0('surv_a2 ~ ', 
                       x, 
                       ' + rcs(age, 3) + sex + year_enrol',
@@ -199,7 +203,7 @@ fit_a2_m3 <- map(
 
 fit_a2_m4 <- map(
   expo,
-  \(x) coxph(
+  \(x) rms::cph(
     as.formula(paste0('surv_a2 ~ ', 
                       x, 
                       ' + rcs(age, 3) + sex + year_enrol',
@@ -240,50 +244,6 @@ opeck_res_a2 <-
                              'vapo' ~ 'Vapours',
                              'vgdf' ~ 'VGDF',
                              'vgdffm' ~ 'VGDFFM'))
-
-p03_01 <- opeck_res_a2 %>%  
-  filter(!term %in% c('asth', 'gasf'),
-         model != 0) %>% 
-  mutate(
-    model = factor(model) %>% fct_rev(),
-    term  = factor(term) %>% fct_rev(),
-    term_id = as.numeric(term)
-  ) %>% 
-  ggplot(aes(y = term,
-             group = model,
-             x = exp(estimate), 
-             xmin = exp(estimate - 1.96*std.error), 
-             xmax = exp(estimate + 1.96*std.error),
-             colour = model)) +
-  geom_rect(
-    aes(
-      ymin = term_id - 0.44,
-      ymax = term_id + 0.44,
-      xmin = 0.95,
-      xmax = 1.22
-    ),
-    fill = 'lightgrey',
-    inherit.aes = FALSE,
-    alpha = 0.05
-  ) +
-  geom_text(aes(y = term, x = 0.9475, label = term_f), hjust = 1, colour = 'black') +
-  geom_vline(aes(xintercept = 1), colour = 'white', size = 2) +
-  geom_point(aes(shape = model), position = position_dodge(.8)) +
-  geom_errorbar(orientation = 'y', position = position_dodge(.8), width = .5) +
-  scale_x_continuous(trans = 'log', 
-                     breaks = c(.95, 1, 1.05, 1.1, 1.15, 1.2),
-                     expand = c(0,0)) +
-  scale_colour_grey(start = .1, end = .7, breaks = 0:4) + 
-  scale_shape_manual(values = 15:19, breaks = 0:4) +
-  coord_cartesian(xlim = c(.7, 1.51)) +
-  labs(shape = 'Model', colour = 'Model', x = 'Adjusted HR (95% CI) for incident CKD per 10 EU-year') +
-  theme_void() +
-  theme(
-    axis.text.x = element_text(size = 10, vjust = 1),
-    axis.title.x = element_text(size = 12, hjust = 1, vjust = 0),
-    legend.position = 'bottom'
-  )
-ggsave(filename = 'opeck/outputs/plots/p03_01.svg', p03_01, width = 10, height = 6)
 
 # 03_02 CROSS-SECTIONAL ANALYSES OF EGFR-cont ----------------------------------
 opeck_a3 <- left_join(
@@ -473,7 +433,7 @@ opeck_res_a4 <-
                              'vgdf' ~ 'VGDF',
                              'vgdffm' ~ 'VGDFFM'))
 
-# 03_04 CROSS-SECTIONAL ANALYSES OF uACR-cat -----------------------------------
+# 03_04 CROSS-SECTIONAL ANALYSES OF uACR-cont ----------------------------------
 opeck_a5 <- left_join(
   opeck_o2,
   opeck_e3,
@@ -483,56 +443,51 @@ opeck_a5 <- left_join(
 
 fit_a5_m0 <- map(
   expo,
-  \(x) glm(family = 'poisson',
-           as.formula(paste0('uacr > 3 ~ ', 
-                             x)),
-           data = opeck_a5
+  \(x) lm(as.formula(paste0('log(uacr) ~ ', 
+                            x)),
+          data = opeck_a5
   )
 )
 
 fit_a5_m1 <- map(
   expo,
-  \(x) glm(family = 'poisson',
-           as.formula(paste0('uacr > 3 ~ ', 
-                             x, 
-                             ' + rcs(age, 3) + sex')),
-           data = opeck_a5
+  \(x) lm(as.formula(paste0('log(uacr) ~ ', 
+                            x, 
+                            ' + rcs(age, 3) + sex')),
+          data = opeck_a5
   )
 )
 
 fit_a5_m2 <- map(
   expo,
-  \(x) glm(family = 'poisson',
-           as.formula(paste0('uacr > 3 ~ ', 
-                             x, 
-                             ' + rcs(age, 3) + sex',
-                             ' + smo + rcs(bmi,3) + alc')),
-           data = opeck_a5
+  \(x) lm(as.formula(paste0('log(uacr) ~ ', 
+                            x, 
+                            ' + rcs(age, 3) + sex',
+                            ' + smo + rcs(bmi,3) + alc')),
+          data = opeck_a5
   )
 )
 
 fit_a5_m3 <- map(
   expo,
-  \(x) glm(family = 'poisson',
-           as.formula(paste0('uacr > 3 ~ ', 
-                             x, 
-                             ' + rcs(age, 3) + sex',
-                             ' + smo + rcs(bmi,3) + alc',
-                             ' + rcs(dep,3) + eth + rcs(qua,3) + inc')),
-           data = opeck_a5
+  \(x) lm(as.formula(paste0('log(uacr) ~ ', 
+                            x, 
+                            ' + rcs(age, 3) + sex',
+                            ' + smo + rcs(bmi,3) + alc',
+                            ' + rcs(dep,3) + eth + rcs(qua,3) + inc')),
+          data = opeck_a5
   )
 )
 
 fit_a5_m4 <- map(
   expo,
-  \(x) glm(family = 'poisson',
-           as.formula(paste0('uacr > 3 ~ ', 
-                             x, 
-                             ' + rcs(age, 3) + sex',
-                             ' + smo + rcs(bmi,3) + alc',
-                             ' + rcs(dep,3) + eth + rcs(qua,3) + inc',
-                             ' + rcs(ldl,3) + rcs(gly,3) + dia + hpt')),
-           data = opeck_a5
+  \(x) lm(as.formula(paste0('log(uacr) ~ ', 
+                            x, 
+                            ' + rcs(age, 3) + sex',
+                            ' + smo + rcs(bmi,3) + alc',
+                            ' + rcs(dep,3) + eth + rcs(qua,3) + inc',
+                            ' + rcs(ldl,3) + rcs(gly,3) + dia + hpt')),
+          data = opeck_a5
   )
 )
 
@@ -544,6 +499,100 @@ opeck_res_a5 <-
       map(fit_a5_m2, broom::tidy) %>% bind_rows,
       map(fit_a5_m3, broom::tidy) %>% bind_rows,
       map(fit_a5_m4, broom::tidy) %>% bind_rows
+    ),
+    0:4,
+    \(x, y) bind_rows(x) %>% 
+      mutate(model = y) %>% 
+      filter(term %in% expo)
+  ) %>% 
+  bind_rows() %>% 
+  mutate(term_f = case_match(term,
+                             'asth' ~ 'Asthmagens',
+                             'dies' ~ 'Diesel exhaust',
+                             'dust' ~ 'Dusts',
+                             'dust_bio' ~ 'Biological dusts',
+                             'dust_min' ~ 'Mineral dusts',
+                             'fibr' ~ 'Fibres',
+                             'fume' ~ 'Fumes',
+                             'gas' ~ 'Gasses',
+                             'gasf' ~ 'Gasses and fumes',
+                             'meta' ~ 'Metals',
+                             'mist' ~ 'Mists',
+                             'vapo' ~ 'Vapours',
+                             'vgdf' ~ 'VGDF',
+                             'vgdffm' ~ 'VGDFFM'))
+
+# 03_05 CROSS-SECTIONAL ANALYSES OF uACR-cat -----------------------------------
+opeck_a6 <- left_join(
+  opeck_o2,
+  opeck_e3,
+  by = 'opeck_id'
+) %>%  
+  filter(is.na(n07))
+
+fit_a6_m0 <- map(
+  expo,
+  \(x) glm(family = 'poisson',
+           as.formula(paste0('uacr > 3 ~ ', 
+                             x)),
+           data = opeck_a6
+  )
+)
+
+fit_a6_m1 <- map(
+  expo,
+  \(x) glm(family = 'poisson',
+           as.formula(paste0('uacr > 3 ~ ', 
+                             x, 
+                             ' + rcs(age, 3) + sex')),
+           data = opeck_a6
+  )
+)
+
+fit_a6_m2 <- map(
+  expo,
+  \(x) glm(family = 'poisson',
+           as.formula(paste0('uacr > 3 ~ ', 
+                             x, 
+                             ' + rcs(age, 3) + sex',
+                             ' + smo + rcs(bmi,3) + alc')),
+           data = opeck_a6
+  )
+)
+
+fit_a6_m3 <- map(
+  expo,
+  \(x) glm(family = 'poisson',
+           as.formula(paste0('uacr > 3 ~ ', 
+                             x, 
+                             ' + rcs(age, 3) + sex',
+                             ' + smo + rcs(bmi,3) + alc',
+                             ' + rcs(dep,3) + eth + rcs(qua,3) + inc')),
+           data = opeck_a6
+  )
+)
+
+fit_a6_m4 <- map(
+  expo,
+  \(x) glm(family = 'poisson',
+           as.formula(paste0('uacr > 3 ~ ', 
+                             x, 
+                             ' + rcs(age, 3) + sex',
+                             ' + smo + rcs(bmi,3) + alc',
+                             ' + rcs(dep,3) + eth + rcs(qua,3) + inc',
+                             ' + rcs(ldl,3) + rcs(gly,3) + dia + hpt')),
+           data = opeck_a6
+  )
+)
+
+opeck_res_a6 <- 
+  map2(
+    list(
+      map(fit_a6_m0, broom::tidy) %>% bind_rows,
+      map(fit_a6_m1, broom::tidy) %>% bind_rows,
+      map(fit_a6_m2, broom::tidy) %>% bind_rows,
+      map(fit_a6_m3, broom::tidy) %>% bind_rows,
+      map(fit_a6_m4, broom::tidy) %>% bind_rows
     ),
     0:4,
     \(x, y) bind_rows(x) %>% 

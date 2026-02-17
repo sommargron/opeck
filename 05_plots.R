@@ -34,7 +34,7 @@ ggsave('opeck/outputs/plots/p01_01.svg', width = 10, height = 6)
 
 
 
-p03_00 <- opeck_res_a1 %>%  
+p03_01 <- opeck_res_a1 %>%  
   filter(!term %in% c('asth', 'gasf'),
          model != 0) %>% 
   mutate(
@@ -52,14 +52,14 @@ p03_00 <- opeck_res_a1 %>%
     aes(
       ymin = term_id - 0.44,
       ymax = term_id + 0.44,
-      xmin = 0.95,
+      xmin = 0.93,
       xmax = 1.22
     ),
     fill = 'lightgrey',
     inherit.aes = FALSE,
     alpha = 0.05
   ) +
-  geom_text(aes(y = term, x = 0.9475, label = term_f), hjust = 1, colour = 'black') +
+  geom_text(aes(y = term, x = 0.9275, label = term_f), hjust = 1, colour = 'black') +
   geom_vline(aes(xintercept = 1), colour = 'white', size = 2) +
   geom_point(aes(shape = model), position = position_dodge(.8)) +
   geom_errorbar(orientation = 'y', position = position_dodge(.8), width = .5) +
@@ -68,15 +68,15 @@ p03_00 <- opeck_res_a1 %>%
                      expand = c(0,0)) +
   scale_colour_grey(start = .1, end = .7, breaks = 0:4) + 
   scale_shape_manual(values = 15:19, breaks = 0:4) +
-  coord_cartesian(xlim = c(.91, 1.21)) +
-  labs(shape = 'Model', colour = 'Model', x = 'Adjusted HR (95% CI) for incident CKD per 10 EU-year') +
+  coord_cartesian(xlim = c(.89, 1.16)) +
+  labs(shape = 'Model', colour = 'Model', x = 'Adjusted HR (95% CI) for incident CKD per 10 EU-years') +
   theme_void() +
   theme(
     axis.text.x = element_text(size = 10, vjust = 1),
     axis.title.x = element_text(size = 12, hjust = 1, vjust = 0),
     legend.position = 'bottom'
   )
-ggsave(filename = 'opeck/outputs/plots/p03_00.svg', p03_00, width = 10, height = 6)
+ggsave(filename = 'opeck/outputs/plots/p03_01.svg', p03_01, width = 10, height = 6)
 
 p03_03 <- opeck_res_a3 %>%  
   filter(!term %in% c('asth', 'gasf'),
@@ -96,22 +96,22 @@ p03_03 <- opeck_res_a3 %>%
     aes(
       ymin = term_id - 0.44,
       ymax = term_id + 0.44,
-      xmin = -0.5,
-      xmax = 0.3
+      xmin = -0.47,
+      xmax = 0.65
     ),
     fill = 'lightgrey',
     inherit.aes = FALSE,
     alpha = 0.05
   ) +
-  geom_text(aes(y = term, x = -0.5125, label = term_f), hjust = 1, colour = 'black') +
+  geom_text(aes(y = term, x = -0.4825, label = term_f), hjust = 1, colour = 'black') +
   geom_vline(aes(xintercept = 0), colour = 'white', size = 2) +
   geom_point(aes(shape = model), position = position_dodge(.8)) +
   geom_errorbar(orientation = 'y', position = position_dodge(.8), width = .5) +
-  scale_x_continuous(breaks = c(-.4, -.2, 0, .2),
+  scale_x_continuous(breaks = c(-.4, -.2, 0, .2, .4, .6),
                      expand = c(0,0)) +
   scale_colour_grey(start = .1, end = .7, breaks = 0:4) + 
   scale_shape_manual(values = 15:19, breaks = 0:4) +
-  coord_cartesian(xlim = c(-.7, .3)) +
+  coord_cartesian(xlim = c(-.66, .65)) +
   labs(shape = 'Model', colour = 'Model', x = 'Adjusted % difference in eGFR (95% CI) per 10 EU-years') +
   theme_void() +
   theme(
@@ -119,10 +119,11 @@ p03_03 <- opeck_res_a3 %>%
     axis.title.x = element_text(size = 12, hjust = 1, vjust = 0),
     legend.position = 'bottom'
   )
-ggsave(filename = 'opeck/outputs/plots/p03_02.svg', p03_01, width = 10, height = 6)
+p03_03
+ggsave(filename = 'opeck/outputs/plots/p03_03.svg', p03_03, width = 10, height = 6)
 
 
-p03_03 <- opeck_res_a4 %>%  
+p03_04 <- opeck_res_a4 %>%  
   filter(!term %in% c('asth', 'gasf'),
          model != 0) %>% 
   mutate(
@@ -164,9 +165,53 @@ p03_03 <- opeck_res_a4 %>%
     axis.title.x = element_text(size = 12, hjust = 1, vjust = 0),
     legend.position = 'bottom'
   )
-ggsave(filename = 'opeck/outputs/plots/p03_03.svg', p03_03, width = 10, height = 6)
+ggsave(filename = 'opeck/outputs/plots/p03_04.svg', p03_04, width = 10, height = 6)
 
-p03_04 <- opeck_res_a5 %>%  
+p03_05 <- opeck_res_a5 %>%  
+  filter(!term %in% c('asth', 'gasf'),
+         model != 0) %>% 
+  mutate(
+    model = factor(model) %>% fct_rev(),
+    term  = factor(term) %>% fct_rev(),
+    term_id = as.numeric(term)
+  ) %>% 
+  ggplot(aes(y = term,
+             group = model,
+             x = (exp(estimate)-1)*100, 
+             xmin = (exp(estimate - 1.96*std.error)-1) * 100, 
+             xmax = (exp(estimate + 1.96*std.error)-1) * 100,
+             colour = model)) +
+  geom_rect(
+    aes(
+      ymin = term_id - 0.44,
+      ymax = term_id + 0.44,
+      xmin = -2.2,
+      xmax = 3.2
+    ),
+    fill = 'lightgrey',
+    inherit.aes = FALSE,
+    alpha = 0.05
+  ) +
+  geom_text(aes(y = term, x = -2.25, label = term_f), hjust = 1, colour = 'black') +
+  geom_vline(aes(xintercept = 0), colour = 'white', size = 2) +
+  geom_point(aes(shape = model), position = position_dodge(.8)) +
+  geom_errorbar(orientation = 'y', position = position_dodge(.8), width = .5) +
+  scale_x_continuous(breaks = c(-2, -1.5, -1, -.5, 0, .5, 1, 1.5, 2, 2.5, 3),
+                     expand = c(0,0)) +
+  scale_colour_grey(start = .1, end = .7, breaks = 0:4) + 
+  scale_shape_manual(values = 15:19, breaks = 0:4) +
+  coord_cartesian(xlim = c(-3.2, 3.2)) +
+  labs(shape = 'Model', colour = 'Model', x = 'Adjusted % difference in uACR (95% CI) per 10 EU-years') +
+  theme_void() +
+  theme(
+    axis.text.x = element_text(size = 10, vjust = 1),
+    axis.title.x = element_text(size = 12, hjust = 1, vjust = 0),
+    legend.position = 'bottom'
+  )
+ggsave(filename = 'opeck/outputs/plots/p03_05.svg', p03_05, width = 10, height = 6)
+
+
+p03_06 <- opeck_res_a6 %>%  
   filter(!term %in% c('asth', 'gasf'),
          model != 0) %>% 
   mutate(
@@ -200,7 +245,7 @@ p03_04 <- opeck_res_a5 %>%
                      expand = c(0,0)) +
   scale_colour_grey(start = .1, end = .7, breaks = 0:4) + 
   scale_shape_manual(values = 15:19, breaks = 0:4) +
-  coord_cartesian(xlim = c(.91, 1.11)) +
+  coord_cartesian(xlim = c(.925, 1.11)) +
   labs(shape = 'Model', colour = 'Model', x = 'Adjusted PR (95% CI) for uACR >3 per 10 EU-year') +
   theme_void() +
   theme(
@@ -208,4 +253,17 @@ p03_04 <- opeck_res_a5 %>%
     axis.title.x = element_text(size = 12, hjust = 1, vjust = 0),
     legend.position = 'bottom'
   )
-ggsave(filename = 'opeck/outputs/plots/p03_04.svg', p03_04, width = 10, height = 6)
+ggsave(filename = 'opeck/outputs/plots/p03_06.svg', p03_06, width = 10, height = 6)
+
+cowplot::plot_grid(
+  p03_01 + 
+    ggtitle('A. Incident CKD') +
+    theme(legend.position = 'none'),
+  p03_03 +
+    ggtitle('B. Baseline eGFR'),
+  p03_05 +
+    ggtitle('C. Baseline uACR') +
+    theme(legend.position = 'none'),
+  align = 'h',
+  nrow = 1
+)

@@ -8,6 +8,7 @@ install.packages('kidney.epi')
 install.packages('svglite')
 install.packages('rms')
 install.packages('broom')
+install.packages('cowplot')
 
 library('tidyverse')
 library('survival')

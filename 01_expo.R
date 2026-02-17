@@ -131,5 +131,8 @@ opeck_e3 <- opeck_e2 %>%
                      asth, meta, gasf, vgdf, vgdffm),
                    ~ sum(.x * duration) * .1))
 
+saveRDS(opeck_e3, 'opeck_e3.rds')
+system("dx upload opeck_e3.rds --destination 'Datasets/Working data/opeck_e3.rds'")
+
 rm(opeck_e1, opeck_e2)
 rm(ace_jem_b, ace_jem_l, ace_jem_p)
